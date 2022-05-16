@@ -24,8 +24,6 @@
 
 namespace block_courselistuv;
 
-defined('MOODLE_INTERNAL') || die;
-
 /**
  * Undocumented class
  */
@@ -39,7 +37,7 @@ class courselistuv_lib {
      * @return string|string[]|null
      */
     public static function uv_first_capital($string) {
-        //Patron para reconocer y no modificar numeros romanos
+        // Patron para reconocer y no modificar numeros romanos.
         $pattern = '/\b(?![LXIVCDM]+\b)([A-Z_-ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝ]+)\b/';
         $output = preg_replace_callback($pattern, function($matches) {
             return mb_strtolower($matches[0], 'UTF-8');
@@ -51,19 +49,19 @@ class courselistuv_lib {
     /**
      * Ordena un arreglo de cursos a partir de la subcadena de fecha en su nombre corto
      *
-     * @param array_courses $array_courses Courses array
+     * @param courses $courses Courses array
      * @return array
      */
-    public static function order_courses_by_shortname(&$array_courses) {
+    public static function order_courses_by_shortname(&$courses) {
 
         global $CFG, $DB;
 
-        $grouped_courses_array = array();
-        $regular_courses_array = array();
-        $no_regular_courses_array = array();
+        $groupedcourses = array();
+        $regularcourses = array();
+        $noregularcourses = array();
         $counter = 0;
 
-        foreach($array_courses as $key=>&$course) {
+        foreach ($courses as $key => &$course) {
 
             $courseobj = new \core_course_list_element($course);
 
@@ -80,36 +78,36 @@ class courselistuv_lib {
 
             $course->courseimage = self::get_course_summary_image($courseobj, $course->link);
 
-            $category = $DB->get_record('course_categories', array("id"=>$categoryid));
+            $category = $DB->get_record('course_categories', array("id" => $categoryid));
             $inipath = explode('/', $category->path);
 
-            // Validación para cursos regulares
-            if($inipath[1] == 6){
+            // Validación para cursos regulares.
+            if ($inipath[1] == 6) {
 
-                array_push($regular_courses_array, $course);
+                array_push($regularcourses, $course);
 
-                $explode_course_shortname = explode("-", $course->shortname);
+                $explodecourseshortname = explode("-", $course->shortname);
 
                 // Se verifica que tenga en su nombre corto la especificación de fecha de creación
-                // una vez identificada se le añade como atributo al curso
-                if(count($explode_course_shortname) && preg_match("/^20/", $explode_course_shortname[3])){
-                    $date_course = substr($explode_course_shortname[3], 0, -3);
-                    $course->date_course = $date_course;
+                // una vez identificada se le añade como atributo al curso.
+                if (count($explodecourseshortname) && preg_match("/^20/", $explodecourseshortname[3])) {
+                    $datecourse = substr($explodecourseshortname[3], 0, -3);
+                    $course->date_course = $datecourse;
                 }
 
-            }else{
-                // Cursos no regulares
-                array_push($no_regular_courses_array, $course);
+            } else {
+                // Cursos no regulares.
+                array_push($noregularcourses, $course);
             }
         }
 
-        self::sort_array_by_attr($regular_courses_array, 'timecreated', $order = SORT_DESC);
-        self::sort_array_by_attr($no_regular_courses_array, 'timecreated', $order = SORT_DESC);
+        self::sort_array_by_attr($regularcourses, 'timecreated', $order = SORT_DESC);
+        self::sort_array_by_attr($noregularcourses, 'timecreated', $order = SORT_DESC);
 
-        $grouped_courses_array['regular_courses'] = $regular_courses_array;
-        $grouped_courses_array['no_regular_courses'] = $no_regular_courses_array;
+        $groupedcourses['regular_courses'] = $regularcourses;
+        $groupedcourses['no_regular_courses'] = $noregularcourses;
 
-        return $grouped_courses_array;
+        return $groupedcourses;
     }
 
     /**
@@ -122,11 +120,11 @@ class courselistuv_lib {
 
         global $DB;
 
-        $sql_query = "SELECT timecreated
+        $sqlquery = "SELECT timecreated
                 FROM {course}
                 WHERE id = $id";
 
-        $timecreated = $DB->get_record_sql($sql_query)->timecreated;
+        $timecreated = $DB->get_record_sql($sqlquery)->timecreated;
 
         return $timecreated;
     }
@@ -137,15 +135,15 @@ class courselistuv_lib {
      * @param $id  Identificador del curso
      * @return int
      */
-    private function get_timemodified_course($id){
+    private function get_timemodified_course($id) {
 
         global $DB;
 
-        $sql_query = "SELECT timemodified
+        $sqlquery = "SELECT timemodified
                 FROM {course}
                 WHERE id = $id";
 
-        $timemodified = $DB->get_record_sql($sql_query)->timemodified;
+        $timemodified = $DB->get_record_sql($sqlquery)->timemodified;
 
         return $timemodified;
 
@@ -157,15 +155,15 @@ class courselistuv_lib {
      * @param $id  Identificador del curso
      * @return int
      */
-    private function get_course_category_id($id){
+    private function get_course_category_id($id) {
 
         global $DB;
 
-        $sql_query = "SELECT category
+        $sqlquery = "SELECT category
                     FROM {course}
                     WHERE id = $id";
 
-        $categoryid = $DB->get_record_sql($sql_query)->category;
+        $categoryid = $DB->get_record_sql($sqlquery)->category;
 
         return $categoryid;
     }
@@ -217,119 +215,115 @@ class courselistuv_lib {
      * @return array
      */
 
-    private function sort_array_by_attr(&$array_initial, $col, $order = SORT_ASC){
+    private function sort_array_by_attr(&$arrayinitial, $col, $order = SORT_ASC) {
 
-        $arrAux = array();
+        $arraux = array();
 
-        foreach ($array_initial as $key=> $row){
-            $arrAux[$key] = is_object($row) ? $arrAux[$key] = $row->$col : $row[$col];
-            $arrAux[$key] = strtolower($arrAux[$key]);
+        foreach ($arrayinitial as $key => $row) {
+            $arraux[$key] = is_object($row) ? $arraux[$key] = $row->$col : $row[$col];
+            $arraux[$key] = strtolower($arraux[$key]);
         }
 
-        array_multisort($arrAux, $order, $array_initial);
+        array_multisort($arraux, $order, $arrayinitial);
     }
 
     /**
      * Agrupa los cursos por semestre y por categoría
      *
-     * @param array_courses $array_courses Courses array
-     * @param string $courses_type
+     * @param courses $courses Courses array
+     * @param string $coursestype
      * @return array
      */
 
-    public static function group_courses_by_semester($array_courses, $courses_type){
+    public static function group_courses_by_semester($courses, $coursestype) {
 
-        $grouped_courses_array = array();
-        $grouped_courses_array['inprogress_regular'] = array();
-        $grouped_courses_array['past_regular'] = array();
-        $grouped_courses_array['inprogress_no_regular'] = array();
-        $grouped_courses_array['past_no_regular'] = array();
+        $groupedcourses = array();
+        $groupedcourses['inprogress_regular'] = array();
+        $groupedcourses['past_regular'] = array();
+        $groupedcourses['inprogress_no_regular'] = array();
+        $groupedcourses['past_no_regular'] = array();
 
-        // Semestre calendario actual
-        $current_semester = self::get_academic_period();
-        $date_ranges_current_semester = self::date_ranges_academic_period($current_semester);
+        // Semestre calendario actual.
+        $currentsemester = self::get_academic_period();
+        $daterangescurrentsemester = self::date_ranges_academic_period($currentsemester);
 
-        if($courses_type == 'regular'){
+        if ($coursestype == 'regular') {
 
-            // Se dividen los cursos en dos arreglos regulares pasados y regulares en progreso
-            foreach($array_courses as $course){
+            // Se dividen los cursos en dos arreglos regulares pasados y regulares en progreso.
+            foreach ($courses as $course) {
                 // Criterios para determinar un curso activo:
-                // 1. Fecha de inicio del curso se encuentra entre las fechas de inicio y fin del
-                //    semestre calendario actual.
-                // 2. Fecha de finalización del curso no es menor a la fecha actual
-                // 3. Su periodo académico asociado se encuentra activo
+                // 1. Fecha de inicio del curso se encuentra entre las fechas de inicio y fin del semestre calendario actual.
+                // 2. Fecha de finalización del curso no es menor a la fecha actual.
+                // 3. Su periodo académico asociado se encuentra activo.
 
                 $date = date_create();
 
-                $academicPeriodCourse = explode('-', $course->shortname)[3];
+                $academicperiodcourse = explode('-', $course->shortname)[3];
 
-                $academicPeriodActive = self::verify_academic_period($academicPeriodCourse);
+                $academicperiodactive = self::verify_academic_period($academicperiodcourse);
 
-                if(($course->startdate > $date_ranges_current_semester->start_date &&
-                    $course->startdate < $date_ranges_current_semester->end_date) ||
+                if (($course->startdate > $daterangescurrentsemester->start_date &&
+                    $course->startdate < $daterangescurrentsemester->end_date) ||
                     $course->enddate > date_timestamp_get($date) ||
-                    $academicPeriodActive->active == 1){
-                        array_push($grouped_courses_array['inprogress_regular'], $course);
+                    $academicperiodactive->active == 1) {
+                        array_push($groupedcourses['inprogress_regular'], $course);
                 } else {
-                    array_push($grouped_courses_array['past_regular'], $course);
+                    array_push($groupedcourses['past_regular'], $course);
                 }
             }
 
-            $past_courses_by_semester = array();
-            $counter_semester = -1;
-            $semester_name = "";
-            $semester_code = "";
+            $pastcoursesbysemester = array();
 
-            $past_courses_by_semester = array();
+            foreach ($groupedcourses['past_regular'] as $pastregularcourse) {
 
-            foreach($grouped_courses_array['past_regular'] as $past_regular_course){
-
-                if(intval(substr($past_regular_course->date_course, 4, 2)) <= 6){
-                    $coursesemester = substr($past_regular_course->date_course, 0, 4).'I';
-                }else{
-                    $coursesemester = substr($past_regular_course->date_course, 0, 4).'II';
+                if (intval(substr($pastregularcourse->date_course, 4, 2)) <= 6) {
+                    $coursesemester = substr($pastregularcourse->date_course, 0, 4).'I';
+                } else {
+                    $coursesemester = substr($pastregularcourse->date_course, 0, 4).'II';
                 }
 
-                if(key_exists($coursesemester, $past_courses_by_semester)){
-                    array_push($past_courses_by_semester[$coursesemester]['courses'], $past_regular_course);
-                }else{
-                    $past_courses_by_semester[$coursesemester] = array();
-                    $past_courses_by_semester[$coursesemester]['semester_code'] = $coursesemester;
-                    $past_courses_by_semester[$coursesemester]['semester_name'] = get_string('courselistsemester', 'theme_moove')." ".substr($coursesemester, 0, 4)." ".substr($coursesemester, 4, 2);
-                    $past_courses_by_semester[$coursesemester]['courses'] = array();
-                    array_push($past_courses_by_semester[$coursesemester]['courses'], $past_regular_course);
+                if (key_exists($coursesemester, $pastcoursesbysemester)) {
+                    array_push($pastcoursesbysemester[$coursesemester]['courses'], $pastregularcourse);
+                } else {
+                    $pastcoursesbysemester[$coursesemester] = array();
+                    $pastcoursesbysemester[$coursesemester]['semester_code'] = $coursesemester;
+                    $pastcoursesbysemester[$coursesemester]['semester_name'] = get_string('courselistsemester', 'theme_moove') .
+                                                                                " " . substr($coursesemester, 0, 4) .
+                                                                                " " . substr($coursesemester, 4, 2);
+                    $pastcoursesbysemester[$coursesemester]['courses'] = array();
+                    array_push($pastcoursesbysemester[$coursesemester]['courses'], $pastregularcourse);
                 }
             }
 
-            krsort($past_courses_by_semester);
+            krsort($pastcoursesbysemester);
 
             $pastcoursesnoassociative = array();
 
-            foreach($past_courses_by_semester as $semester){
+            foreach ($pastcoursesbysemester as $semester) {
                 array_push($pastcoursesnoassociative, $semester);
             }
 
-            $grouped_courses_array['past_regular'] = array();
-            $grouped_courses_array['past_regular'] = $pastcoursesnoassociative;
+            $groupedcourses['past_regular'] = array();
+            $groupedcourses['past_regular'] = $pastcoursesnoassociative;
 
-            return $grouped_courses_array;
+            return $groupedcourses;
 
-        }else{
+        } else {
 
-            $grouped_courses_array['past_no_regular']['semester_name'] = get_string('courselistnonregular', 'theme_moove');
-            $grouped_courses_array['past_no_regular']['semester_code'] = "noregulars";
-            $grouped_courses_array['past_no_regular']['courses'] = array();
-            foreach($array_courses as $course){
+            $groupedcourses['past_no_regular']['semester_name'] = get_string('courselistnonregular', 'theme_moove');
+            $groupedcourses['past_no_regular']['semester_code'] = "noregulars";
+            $groupedcourses['past_no_regular']['courses'] = array();
 
-                if($course->timecreated >= 1590987600
-                || $course->timemodified >= 1590987600){
-                    array_push($grouped_courses_array['inprogress_no_regular'], $course);
-                }else{
-                    array_push($grouped_courses_array['past_no_regular']['courses'], $course);
+            foreach ($courses as $course) {
+
+                if ($course->timecreated >= 1590987600 || $course->timemodified >= 1590987600) {
+                    array_push($groupedcourses['inprogress_no_regular'], $course);
+                } else {
+                    array_push($groupedcourses['past_no_regular']['courses'], $course);
                 }
             }
 
-            return $grouped_courses_array;
+            return $groupedcourses;
         }
 
     }
@@ -340,60 +334,60 @@ class courselistuv_lib {
      * @return stdClass
      */
 
-    private function get_academic_period(){
+    private function get_academic_period() {
 
-        $current_period = new \stdClass();
+        $currentperiod = new \stdClass();
 
         $today = getdate();
 
-        $current_period->year = $today['year'];
+        $currentperiod->year = $today['year'];
 
-        if($today['mon'] > 0 && $today['mon'] <= 6){
-            $current_period->period = "1";
-        }else{
-            $current_period->period = "2";
+        if ($today['mon'] > 0 && $today['mon'] <= 6) {
+            $currentperiod->period = "1";
+        } else {
+            $currentperiod->period = "2";
         }
 
-        return $current_period;
+        return $currentperiod;
     }
 
     /**
      * Dado el periodo académico actual, retorna el rango de fechas donde el semestre estaría definido
      *
-     * @param current_period $current_period stdClass Periodo actual
+     * @param currentperiod $currentperiod stdClass Periodo actual
      * @return stdClass
      */
-    private function date_ranges_academic_period($current_period){
+    private function date_ranges_academic_period($currentperiod) {
 
         date_default_timezone_set('America/Bogota');
-        $date_ranges = new \stdClass();
+        $dateranges = new \stdClass();
 
-        if($current_period->period == '1'){
-            $human_start_date = $current_period->year."-01-01 00:00:00";
-            $human_end_date = $current_period->year."-07-25 23:59:59";
+        if ($currentperiod->period == '1') {
+            $humanstartdate = $currentperiod->year."-01-01 00:00:00";
+            $humanenddate = $currentperiod->year."-07-25 23:59:59";
 
-            $timestamp_start_date = strtotime($human_start_date);
-            $timestamp_end_date = strtotime($human_end_date);
+            $timestampstartdate = strtotime($humanstartdate);
+            $timestampenddate = strtotime($humanenddate);
 
-            $date_ranges->start_month = '01';
-            $date_ranges->end_month = '07';
-        }else{
-            $human_start_date = $current_period->year."-07-26 00:00:00";
-            $human_end_date = $current_period->year."-12-31 23:59:59";
+            $dateranges->start_month = '01';
+            $dateranges->end_month = '07';
+        } else {
+            $humanstartdate = $currentperiod->year."-07-26 00:00:00";
+            $humanenddate = $currentperiod->year."-12-31 23:59:59";
 
-            $timestamp_start_date = strtotime($human_start_date);
-            $timestamp_end_date = strtotime($human_end_date);
+            $timestampstartdate = strtotime($humanstartdate);
+            $timestampenddate = strtotime($humanenddate);
 
-            $date_ranges->start_month = '08';
-            $date_ranges->end_month = '12';
+            $dateranges->start_month = '08';
+            $dateranges->end_month = '12';
         }
 
-        $date_ranges->start_date = $timestamp_start_date;
-        $date_ranges->end_date = $timestamp_end_date;
-        $date_ranges->year_period = $current_period->year;
-        $date_ranges->period = $current_period;
+        $dateranges->start_date = $timestampstartdate;
+        $dateranges->end_date = $timestampenddate;
+        $dateranges->year_period = $currentperiod->year;
+        $dateranges->period = $currentperiod;
 
-        return $date_ranges;
+        return $dateranges;
     }
 
     /**
@@ -402,23 +396,23 @@ class courselistuv_lib {
      * @param  mixed $academicPeriod
      * @return obj
      */
-    private function verify_academic_period($academicPeriod) {
+    private function verify_academic_period($academicperiod) {
 
         global $DB;
 
         $table = 'iracv_academic_periods';
 
         $conditions = array();
-        $conditions['code'] = $academicPeriod;
+        $conditions['code'] = $academicperiod;
 
-        $academicPeriodActive = $DB->get_record($table, $conditions, 'active');
+        $academicperiodactive = $DB->get_record($table, $conditions, 'active');
 
-        if(!$academicPeriodActive){
-            $academicPeriodActive = new \stdClass();
-            $academicPeriodActive->active = 0;
+        if (!$academicperiodactive) {
+            $academicperiodactive = new \stdClass();
+            $academicperiodactive->active = 0;
         }
 
-        return $academicPeriodActive;
+        return $academicperiodactive;
     }
 
 }

@@ -26,11 +26,17 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($ADMIN->fulltree) {
-    $options = array('all'=>get_string('allcourses', 'block_courselistuv'), 'own'=>get_string('owncourses', 'block_courselistuv'));
+    $options = array('all' => get_string('allcourses', 'block_courselistuv'),
+                        'own' => get_string('owncourses', 'block_courselistuv'));
 
-    $settings->add(new admin_setting_configselect('block_courselistuv_adminview', get_string('adminview', 'block_courselistuv'),
-                    get_string('configadminview', 'block_courselistuv'), 'all', $options));
+    $settings->add(new admin_setting_configselect('block_courselistuv_adminview',
+                    get_string('adminview', 'block_courselistuv'),
+                    get_string('configadminview', 'block_courselistuv'),
+                    'all',
+                    $options));
 
-    $settings->add(new admin_setting_configcheckbox('block_courselistuv_hideallcourseslink', get_string('hideallcourseslink', 'block_courselistuv'),
-                    get_string('confighideallcourseslink', 'block_courselistuv'), 0));
+    $settings->add(new admin_setting_configcheckbox('block_courselistuv_hideallcourseslink',
+                    get_string('hideallcourseslink', 'block_courselistuv'),
+                    get_string('confighideallcourseslink', 'block_courselistuv'),
+                    0));
 }

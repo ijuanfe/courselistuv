@@ -22,8 +22,9 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-include_once($CFG->dirroot . '/course/lib.php');
-// include_once($CFG->dirroot . '/theme/moove/classes/lib/theme_moove_myoverview_lib.php');
+defined('MOODLE_INTERNAL') || die();
+
+require_once($CFG->dirroot . '/course/lib.php');
 
 class block_courselistuv extends block_list {
 
@@ -56,48 +57,43 @@ class block_courselistuv extends block_list {
             return $this->content;
         }
 
-        // if (empty($this->instance)) {
-        //     $this->content = '';
-        //     return $this->content;
-        // }
-
         $this->content = new stdClass();
         $this->content->items = array();
         $this->content->icons = array();
         $this->content->footer = '';
-        $this->content->type = ''; //Se uso para identificar si es category o cursos normales
+        $this->content->type = ''; // Se uso para identificar si es category o cursos normales.
 
         $icon = $OUTPUT->pix_icon('i/course', get_string('course'));
 
         $adminseesall = true;
         if (isset($CFG->block_courselistuv_adminview)) {
-           if ( $CFG->block_courselistuv_adminview == 'own'){
-               $adminseesall = false;
-           }
+            if ($CFG->block_courselistuv_adminview == 'own') {
+                $adminseesall = false;
+            }
         }
 
         if (empty($CFG->disablemycourses) and isloggedin() and !isguestuser() and
-          !(has_capability('moodle/course:update', context_system::instance()) and $adminseesall)) {    // Just print My Courses
+          !(has_capability('moodle/course:update', context_system::instance()) and $adminseesall)) { // Just print My Courses.
             if ($courses = enrol_get_all_users_courses($USER->id, true, null)) {
 
-                $array_courses_group = array();
+                $coursesgroup = array();
 
-                // Función añadida para el Campus Virtual Univalle
-                //$courses = $this->order_courses_univalle($courses);
-                // $array_courses_order = order_courses_by_shortname($courses);
-                $array_courses_order = \block_courselistuv\courselistuv_lib::order_courses_by_shortname($courses);
-                // $array_courses_group['regular_courses'] = group_courses_by_semester($array_courses_order['regular_courses'], 'regular');
-                $array_courses_group['regular_courses'] = \block_courselistuv\courselistuv_lib::group_courses_by_semester($array_courses_order['regular_courses'], 'regular');
-                // $array_courses_group['no_regular_courses'] = group_courses_by_semester($array_courses_order['no_regular_courses'], 'noregular');
-                $array_courses_group['no_regular_courses'] = \block_courselistuv\courselistuv_lib::group_courses_by_semester($array_courses_order['no_regular_courses'], 'noregular');
+                // Función añadida para el Campus Virtual Univalle.
+                $coursesorder = \block_courselistuv\courselistuv_lib::order_courses_by_shortname($courses);
+                $coursesgroup['regular_courses'] = \block_courselistuv\courselistuv_lib::group_courses_by_semester(
+                                                        $coursesorder['regular_courses'], 'regular');
+                $coursesgroup['no_regular_courses'] = \block_courselistuv\courselistuv_lib::group_courses_by_semester(
+                                                        $coursesorder['no_regular_courses'], 'noregular');
                 $html = "";
 
-                //In Progress Regular and In Progress No Regular
+                // In Progress Regular and In Progress No Regular.
                 $html .= "<div class=\"\">
 			    <div class=\"\" id=\"heading\" >
 				<h5 class=\"mb-0\">
-				<button class=\"btn btn-link\" data-toggle=\"collapse\" style=\"padding: 0.190rem .10rem !important;\" data-target=\"#progreso\" aria-expanded=\"true\" aria-controls=\"progreso\">
-				<b><span class=\"fa fa-caret-right\"></span>"." ".get_string('courselistcurrentsemester', 'theme_moove')."</b>
+				<button class=\"btn btn-link\" data-toggle=\"collapse\"
+                    style=\"padding: 0.190rem .10rem !important;\"
+                    data-target=\"#progreso\" aria-expanded=\"true\" aria-controls=\"progreso\">
+				    <b><span class=\"fa fa-caret-right\"></span>" . " " . get_string('courselistcurrentsemester', 'theme_moove') . "</b>
 				</button>
 				</h5>
 			    </div>
@@ -105,12 +101,14 @@ class block_courselistuv extends block_list {
 			    <div id=\"progreso\" class=\"collapse\" aria-labelledby=\"heading\"  data-parent=\"#accordion_course_list\">
 				<div class=\"card-body\" style=\"padding: 0.50rem 1.00rem 0rem 1.00rem !important;\">
 				<ul style=\"padding-left: 0rem !important;\">";
-                foreach ($array_courses_group['regular_courses']['inprogress_regular'] as $courses_in_progress){
+                foreach ($coursesgroup['regular_courses']['inprogress_regular'] as $coursesinprogress) {
                     $html .= "<li class=\"no_bullet_point\">
-					        <a class=\"fullname_course_myoverview\" style=\"text-transform: none !important;\" href=\"$CFG->wwwroot/course/view.php?id=";
-                    $html .= $courses_in_progress->id;
+					        <a class=\"fullname_course_myoverview\"
+                            style=\"text-transform: none !important;\" href=\"$CFG->wwwroot/course/view.php?id=";
+                    $html .= $coursesinprogress->id;
                     $html .= "\">";
-                    $html .= $courses_in_progress->shortname . " " . \block_courselistuv\courselistuv_lib::uv_first_capital($courses_in_progress->fullname);
+                    $html .= $coursesinprogress->shortname . " " .
+                        \block_courselistuv\courselistuv_lib::uv_first_capital($coursesinprogress->fullname);
                     $html .= "</a>
 				     </li>";
                 }
@@ -118,37 +116,40 @@ class block_courselistuv extends block_list {
 		                </div>
 	                    </div>
                         </div>";
-                //End In Progress Regular and In Progress No Regular
+                // End In Progress Regular and In Progress No Regular.
 
-                //Past Regular
-                foreach ($array_courses_group as $course_group){
-                    foreach ($course_group['past_regular'] as $courses_data){
+                // Past Regular.
+                foreach ($coursesgroup as $coursegroup) {
+                    foreach ($coursegroup['past_regular'] as $coursesdata) {
                         $html .= "<div class=\"\">
 	                    <div class=\"\" id=\"heading\">
 		                <h5 class=\"mb-0\">
-		                <button class=\"btn btn-link\" data-toggle=\"collapse\" style=\"padding: 0.190rem .10rem !important;\" data-target=\"";
-		                $html .= "#semester-" . $courses_data['semester_code'] . "M";
-		                $html .= "\" aria-expanded=\"true\" aria-controls=\"";
-                        $html .= "semester-".$courses_data['semester_code'] . "M";
-                        $html .= "\">
-		                <b><span class=\"fa fa-caret-right\"></span> ";
-                        $html .= $courses_data['semester_name'];
-                        $html .= "</b>
+		                <button class=\"btn btn-link\" data-toggle=\"collapse\"
+                            style=\"padding: 0.190rem .10rem !important;\" data-target=\"";
+                            $html .= "#semester-" . $coursesdata['semester_code'] . "M";
+                            $html .= "\" aria-expanded=\"true\" aria-controls=\"";
+                            $html .= "semester-".$coursesdata['semester_code'] . "M";
+                            $html .= "\">
+                            <b><span class=\"fa fa-caret-right\"></span> ";
+                            $html .= $coursesdata['semester_name'];
+                            $html .= "</b>
 		                </button>
 		                </h5>
 	                    </div>";
                         $html .= "<div id=\"";
-                        $html .= "semester-".$courses_data['semester_code'] . "M";
+                        $html .= "semester-".$coursesdata['semester_code'] . "M";
                         $html .= "\" class=\"collapse\" aria-labelledby=\"heading\" data-parent=\"#accordion_course_list\">
 		                <div class=\"card-body\" style=\"padding: 0.50rem 1.00rem 0rem 1.00rem !important;\">
 			            <ul style=\"padding-left: 0rem !important;\">";
-                        foreach ($courses_data['courses'] as $data){
+                        foreach ($coursesdata['courses'] as $data) {
 
                             $html .= "<li class=\"no_bullet_point\">
-					        <a class=\"fullname_course_myoverview\" style=\"text-transform: none !important;\" href=\"$CFG->wwwroot/course/view.php?id=";
-                            $html .= $data->id;
-					        $html .= "\">";
-                            $html .= $data->shortname . " " . \block_courselistuv\courselistuv_lib::uv_first_capital($data->fullname);
+					        <a class=\"fullname_course_myoverview\"
+                                style=\"text-transform: none !important;\" href=\"$CFG->wwwroot/course/view.php?id=";
+                                $html .= $data->id;
+                                $html .= "\">";
+                                $html .= $data->shortname . " " .
+                                    \block_courselistuv\courselistuv_lib::uv_first_capital($data->fullname);
                             $html .= "</a>
 				            </li>";
 
@@ -159,41 +160,44 @@ class block_courselistuv extends block_list {
                         </div>";
                     }
                 }
-                //End Past Regular
-                //Past No Regular
-                foreach ($array_courses_group['no_regular_courses'] as $key => $courses_data){
-                    if($key == 'past_no_regular'){
+                // End Past Regular.
+                // Past No Regular.
+                foreach ($coursesgroup['no_regular_courses'] as $key => $coursesdata) {
+                    if ($key == 'past_no_regular') {
                         $html .= "<div class=\"\">
                         <div class=\"\" id=\"heading\">
                         <h5 class=\"mb-0\">
-                        <button class=\"btn btn-link\" data-toggle=\"collapse\" style=\"padding: 0.190rem .10rem !important;\" data-target=\"";
-                        $html .= "#" . $courses_data['semester_code'] . "M";
-                        $html .= "\" aria-expanded=\"true\" aria-controls=\"";
-                        $html .= $courses_data['semester_code'] . "M";
-                        $html .= "\">
-                        <b><span class=\"fa fa-caret-right\"></span> ";
-                        $html .= $courses_data['semester_name'];
-                        $html .= "</b>
+                        <button class=\"btn btn-link\" data-toggle=\"collapse\"
+                            style=\"padding: 0.190rem .10rem !important;\" data-target=\"";
+                            $html .= "#" . $coursesdata['semester_code'] . "M";
+                            $html .= "\" aria-expanded=\"true\" aria-controls=\"";
+                            $html .= $coursesdata['semester_code'] . "M";
+                            $html .= "\">
+                            <b><span class=\"fa fa-caret-right\"></span> ";
+                            $html .= $coursesdata['semester_name'];
+                            $html .= "</b>
                         </button>
                         </h5>
                         </div>";
                         $html .= "<div id=\"";
-                        $html .= $courses_data['semester_code'] . "M";
+                        $html .= $coursesdata['semester_code'] . "M";
                         $html .= "\" class=\"collapse\" aria-labelledby=\"heading\" data-parent=\"#accordion_course_list\">
                         <div class=\"card-body\" style=\"padding: 0.50rem 1.00rem 0rem 1.00rem !important;\">
                         <ul style=\"padding-left: 0rem !important;\">";
-                        foreach ($array_courses_group['no_regular_courses']["inprogress_no_regular"] as $courses_in_progress){
+                        foreach ($coursesgroup['no_regular_courses']["inprogress_no_regular"] as $coursesinprogress) {
                             $html .= "<li class=\"no_bullet_point\">
-                                    <a class=\"fullname_course_myoverview\" style=\"text-transform: none !important;\" href=\"$CFG->wwwroot/course/view.php?id=";
-                            $html .= $courses_in_progress->id;
+                                    <a class=\"fullname_course_myoverview\"
+                                    style=\"text-transform: none !important;\" href=\"$CFG->wwwroot/course/view.php?id=";
+                            $html .= $coursesinprogress->id;
                             $html .= "\">";
-                            $html .= \block_courselistuv\courselistuv_lib::uv_first_capital($courses_in_progress->fullname);
+                            $html .= \block_courselistuv\courselistuv_lib::uv_first_capital($coursesinprogress->fullname);
                             $html .= "</a>
                              </li>";
                         }
-                        foreach ($courses_data['courses'] as $data){
+                        foreach ($coursesdata['courses'] as $data) {
                             $html .= "<li class=\"no_bullet_point\">
-                            <a class=\"fullname_course_myoverview\" style=\"text-transform: none !important;\" href=\"$CFG->wwwroot/course/view.php?id=";
+                            <a class=\"fullname_course_myoverview\"
+                            style=\"text-transform: none !important;\" href=\"$CFG->wwwroot/course/view.php?id=";
                             $html .= $data->id;
                             $html .= "\">";
                             $html .= \block_courselistuv\courselistuv_lib::uv_first_capital($data->fullname);
@@ -206,44 +210,37 @@ class block_courselistuv extends block_list {
                         </div>";
                     }
                 }
-                //End Past No Regular
+                // End Past No Regular.
 
                 $this->content->items[] = $html;
-                /*foreach ($courses as $course) {
-                    $coursecontext = context_course::instance($course->id);
-                    $linkcss = $course->visible ? "" : " class=\"dimmed\" ";
-                    $this->content->items[]="<a $linkcss title=\"" . format_string($course->shortname, true, array('context' => $coursecontext)) . "\" ".
-                               "href=\"$CFG->wwwroot/course/view.php?id=$course->id\">".$icon.format_string(get_course_display_name_for_list($course)). "</a>";
-                }*/
                 $this->title = get_string('mycourses');
-            /// If we can update any course of the view all isn't hidden, show the view all courses link
-                if (has_capability('moodle/course:update', context_system::instance()) || empty($CFG->block_courselistuv_hideallcourseslink)) {
-                    // $this->content->footer = "<a href=\"$CFG->wwwroot/course/index.php\">".get_string("fulllistofcourses")."</a> ...";
-                    //$this->content->footer = "<button class=\"btn btn-link\" style=\"padding: 0.190rem .10rem !important;\"><b><span class=\"fa fa-caret-right\"></span> <a href=\"$CFG->wwwroot/course/index.php?categoryid=109\">"."Cursos abiertos"."</a></b></button>";
-                }
             }
 
             $this->get_remote_courses();
-            if ($this->content->items) { // make sure we don't return an empty list
+            if ($this->content->items) { // Make sure we don't return an empty list.
                 return $this->content;
             }
         }
 
-        $categories = core_course_category::get(0)->get_children();  // Parent = 0   ie top-level categories only
-        if ($categories) {   //Check we have categories
-            if (count($categories) > 1 || (count($categories) == 1 && $DB->count_records('course') > 200)) {     // Just print top level category links
+        $categories = core_course_category::get(0)->get_children(); // Parent = 0 ie top-level categories only.
+        if ($categories) { // Check we have categories.
+            // Just print top level category links.
+            if (count($categories) > 1 || (count($categories) == 1 && $DB->count_records('course') > 200)) {
                 foreach ($categories as $category) {
                     $categoryname = $category->get_formatted_name();
                     $linkcss = $category->visible ? "" : " class=\"dimmed\" ";
-                    $this->content->items[]="<a $linkcss href=\"$CFG->wwwroot/course/index.php?categoryid=$category->id\">".$icon . $categoryname . "</a>";
+                    $this->content->items[] = "<a $linkcss href=\"$CFG->wwwroot/course/index.php?categoryid=$category->id\">" .
+                                                $icon . $categoryname . "</a>";
                 }
-            /// If we can update any course of the view all isn't hidden, show the view all courses link
-                if (has_capability('moodle/course:update', context_system::instance()) || empty($CFG->block_courselistuv_hideallcourseslink)) {
-                    $this->content->footer .= "<a href=\"$CFG->wwwroot/course/index.php\">".get_string('fulllistofcourses').'</a> ...';
+                // If we can update any course of the view all isn't hidden, show the view all courses link.
+                if (has_capability('moodle/course:update', context_system::instance()) ||
+                    empty($CFG->block_courselistuv_hideallcourseslink)) {
+                    $this->content->footer .= "<a href=\"$CFG->wwwroot/course/index.php\">" .
+                                                get_string('fulllistofcourses') . '</a> ...';
                 }
                 $this->title = get_string('categories');
                 $this->title .= '!!!!';
-            } else {                          // Just print course names of single category
+            } else { // Just print course names of single category.
                 $category = array_shift($categories);
                 $courses = get_courses($category->id);
                 if ($courses) {
@@ -251,14 +248,17 @@ class block_courselistuv extends block_list {
                         $coursecontext = context_course::instance($course->id);
                         $linkcss = $course->visible ? "" : " class=\"dimmed\" ";
 
-                        $this->content->items[]="<a $linkcss title=\""
-                                   . format_string($course->shortname, true, array('context' => $coursecontext))."\" ".
-                                   "href=\"$CFG->wwwroot/course/view.php?id=$course->id\">"
-                                   .$icon. format_string(get_course_display_name_for_list($course), true, array('context' => context_course::instance($course->id))) . "</a>";
+                        $this->content->items[] = "<a $linkcss title=\"" .
+                                                    format_string($course->shortname, true, array('context' => $coursecontext)) .
+                                                    "\" " . "href=\"$CFG->wwwroot/course/view.php?id=$course->id\">" . $icon .
+                                                    format_string(get_course_display_name_for_list($course), true,
+                                                    array('context' => context_course::instance($course->id))) . "</a>";
                     }
-                /// If we can update any course of the view all isn't hidden, show the view all courses link
-                    if (has_capability('moodle/course:update', context_system::instance()) || empty($CFG->block_courselistuv_hideallcourseslink)) {
-                        $this->content->footer .= "<a href=\"$CFG->wwwroot/course/index.php\">".get_string('fulllistofcourses').'</a> ...';
+                    // If we can update any course of the view all isn't hidden, show the view all courses link.
+                    if (has_capability('moodle/course:update', context_system::instance()) ||
+                        empty($CFG->block_courselistuv_hideallcourseslink)) {
+                        $this->content->footer .= "<a href=\"$CFG->wwwroot/course/index.php\">" .
+                        get_string('fulllistofcourses') . '</a> ...';
                     }
                     $this->get_remote_courses();
                 } else {
@@ -266,53 +266,58 @@ class block_courselistuv extends block_list {
                     $this->content->icons[] = '';
                     $this->content->items[] = get_string('nocoursesyet');
                     if (has_capability('moodle/course:create', context_coursecat::instance($category->id))) {
-                        $this->content->footer = '<a href="'.$CFG->wwwroot.'/course/edit.php?category='.$category->id.'">'.get_string("addnewcourse").'</a> ...';
+                        $this->content->footer = '<a href="' . $CFG->wwwroot . '/course/edit.php?category=' . $category->id . '">' .
+                        get_string("addnewcourse") . '</a> ...';
                     }
                     $this->get_remote_courses();
                 }
                 $this->title = get_string('courses');
             }
         }
-        //Just for identify
+        // Just for identify.
         $this->content->type = 'category';
 
         return $this->content;
     }
 
-    function get_remote_courses() {
+    public function get_remote_courses() {
         global $CFG, $USER, $OUTPUT;
 
         if (!is_enabled_auth('mnet')) {
-            // no need to query anything remote related
+            // No need to query anything remote related.
             return;
         }
 
         $icon = $OUTPUT->pix_icon('i/mnethost', get_string('host', 'mnet'));
 
-        // shortcut - the rest is only for logged in users!
+        // Shortcut - the rest is only for logged in users!
         if (!isloggedin() || isguestuser()) {
             return false;
         }
 
         if ($courses = get_my_remotecourses()) {
-            $this->content->items[] = get_string('remotecourses','mnet');
+            $this->content->items[] = get_string('remotecourses', 'mnet');
             $this->content->icons[] = '';
             foreach ($courses as $course) {
-                $this->content->items[]="<a title=\"" . format_string($course->shortname, true) . "\" ".
-                    "href=\"{$CFG->wwwroot}/auth/mnet/jump.php?hostid={$course->hostid}&amp;wantsurl=/course/view.php?id={$course->remoteid}\">"
-                    .$icon. format_string(get_course_display_name_for_list($course)) . "</a>";
+                $this->content->items[] = "<a title=\"" . format_string($course->shortname, true) . "\" ".
+                    "href=\"{$CFG->wwwroot}/auth/mnet/jump.php?hostid={$course->hostid}
+                    &amp;wantsurl=/course/view.php?id={$course->remoteid}\">"
+                    . $icon . format_string(get_course_display_name_for_list($course)) . "</a>";
             }
-            // if we listed courses, we are done
+            // If we listed courses, we are done.
             return true;
         }
 
         if ($hosts = get_my_remotehosts()) {
             $this->content->items[] = get_string('remotehosts', 'mnet');
             $this->content->icons[] = '';
-            foreach($USER->mnet_foreign_host_array as $somehost) {
-                $this->content->items[] = $somehost['count'].get_string('courseson','mnet').'<a title="'.$somehost['name'].'" href="'.$somehost['url'].'">'.$icon.$somehost['name'].'</a>';
+            foreach ($USER->mnet_foreign_host_array as $somehost) {
+                $this->content->items[] = $somehost['count'] . get_string('courseson', 'mnet') . '<a title="' .
+                                            $somehost['name'] . '" href="' .
+                                            $somehost['url'] . '">' . $icon .
+                                            $somehost['name'] . '</a>';
             }
-            // if we listed hosts, done
+            // If we listed hosts, done.
             return true;
         }
 
@@ -362,7 +367,7 @@ class block_courselistuv extends block_list {
         $lis = array();
         foreach ($items as $key => $string) {
             $item = html_writer::start_tag('li', array('class' => 'r' . $row));
-            if (!empty($icons[$key])) { //test if the content has an assigned icon
+            if (!empty($icons[$key])) { // Test if the content has an assigned icon.
                 $item .= html_writer::tag('div', $icons[$key], array('class' => 'icon column c0'));
             }
             $item .= html_writer::tag('div', $string, array('class' => 'column c1'));
@@ -370,10 +375,11 @@ class block_courselistuv extends block_list {
             $lis[] = $item;
             $row = 1 - $row; // Flip even/odd.
         }
-        if($type == 'category'){
+        if ($type == 'category') {
             $data = html_writer::tag('ul', implode("\n", $lis), array('class' => 'unlist'));
-        }else {
-            $data = html_writer::tag('div', $items[0], array('class' => 'tab-pane fade active show', 'id'=>'accordion_course_list'));
+        } else {
+            $data = html_writer::tag('div', $items[0],
+                                        array('class' => 'tab-pane fade active show', 'id' => 'accordion_course_list'));
         }
 
         return $data;

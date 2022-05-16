@@ -24,8 +24,6 @@
 
 namespace block_courselistuv\privacy;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Privacy Subsystem for block_courselistuv implementing null_provider.
  *
